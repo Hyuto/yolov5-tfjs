@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-backend-webgl";
+import "@tensorflow/tfjs-backend-webgl"; // set backend to webgl
 import Loader from "./components/loader";
 import { Webcam } from "./utils/webcam";
 import { renderBoxes } from "./utils/renderBox";
 import "./style/App.css";
 
 const App = () => {
-  const modelName = "yolov5n";
   const [loading, setLoading] = useState(true);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const webcam = new Webcam();
+
+  // configs
+  const modelName = "yolov5n";
   const threshold = 0.25;
 
   /**
