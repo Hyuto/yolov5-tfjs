@@ -1,6 +1,6 @@
 # Object Detection using YOLOv5 and Tensorflow.js
 
-[**Completed Version**](https://hyuto.github.io/showcase/yolov5-tfjs)
+[**More Feature Version**](https://hyuto.github.io/showcase/yolov5-tfjs)
 
 Object Detection application right in your browser. Serving YOLOv5 in browser using tensorflow.js
 with `webgl` backend.
