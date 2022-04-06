@@ -7,7 +7,7 @@ import { renderBoxes } from "./utils/renderBox";
 import "./style/App.css";
 
 const App = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState({ loading: true, progress: 0 });
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const webcam = new Webcam();
@@ -44,26 +44,28 @@ const App = () => {
   };
 
   useEffect(() => {
-    tf.loadGraphModel(`${window.location.origin}/${modelName}_web_model/model.json`).then(
-      async (yolov5) => {
-        // Warmup the model before using real data.
-        const dummyInput = tf.ones(yolov5.inputs[0].shape);
-        await yolov5.executeAsync(dummyInput).then((warmupResult) => {
-          tf.dispose(warmupResult);
-          tf.dispose(dummyInput);
+    tf.loadGraphModel(`${window.location.origin}/${modelName}_web_model/model.json`, {
+      onProgress: (fractions) => {
+        setLoading({ loading: true, progress: fractions });
+      },
+    }).then(async (yolov5) => {
+      // Warmup the model before using real data.
+      const dummyInput = tf.ones(yolov5.inputs[0].shape);
+      await yolov5.executeAsync(dummyInput).then((warmupResult) => {
+        tf.dispose(warmupResult);
+        tf.dispose(dummyInput);
 
-          setLoading(false);
-          webcam.open(videoRef, () => detectFrame(yolov5));
-        });
-      }
-    );
+        setLoading({ loading: false, progress: 1 });
+        webcam.open(videoRef, () => detectFrame(yolov5));
+      });
+    });
   }, []);
 
   return (
     <div className="App">
       <h2>Object Detection Using YOLOv5 & Tensorflow.js</h2>
-      {loading ? (
-        <Loader>Loading model...</Loader>
+      {loading.loading ? (
+        <Loader>Loading model... {(loading.progress * 100).toFixed(2)}%</Loader>
       ) : (
         <p>Currently running model : YOLOv5{modelName.slice(6)}</p>
       )}
