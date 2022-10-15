@@ -57,4 +57,5 @@ Use another YOLOv5 model.
    const modelName = "yolov5*"; // change to new model name
    ...
    ```
-5. Done! 😊
+5. Update src\utils\labels.json with your classes
+6. Done! 😊
