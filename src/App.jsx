@@ -2,78 +2,81 @@ import React, { useState, useEffect, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl"; // set backend to webgl
 import Loader from "./components/loader";
-import { Webcam } from "./utils/webcam";
-import { renderBoxes } from "./utils/renderBox";
+import ButtonHandler from "./components/btn-handler";
+import { detect } from "./utils/detect";
 import "./style/App.css";
 
 const App = () => {
-  const [loading, setLoading] = useState({ loading: true, progress: 0 });
+  const [loading, setLoading] = useState({ loading: true, progress: 0 }); // loading state
+  const [model, setModel] = useState({
+    net: null,
+    inputShape: [1, 0, 0, 3],
+  }); // init model & input shape
+
+  // references
+  const cameraRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const webcam = new Webcam();
 
-  // configs
+  // model configs
   const modelName = "yolov5n";
-  const threshold = 0.25;
-
-  /**
-   * Function to detect every frame loaded from webcam in video tag.
-   * @param {tf.GraphModel} model loaded YOLOv5 tensorflow.js model
-   */
-  const detectFrame = async (model) => {
-    tf.engine().startScope();
-    let [modelWidth, modelHeight] = model.inputs[0].shape.slice(1, 3);
-    const input = tf.tidy(() => {
-      return tf.image
-        .resizeBilinear(tf.browser.fromPixels(videoRef.current), [modelWidth, modelHeight])
-        .div(255.0)
-        .expandDims(0);
-    });
-
-    await model.executeAsync(input).then((res) => {
-      const [boxes, scores, classes] = res.slice(0, 3);
-      const boxes_data = boxes.dataSync();
-      const scores_data = scores.dataSync();
-      const classes_data = classes.dataSync();
-      renderBoxes(canvasRef, threshold, boxes_data, scores_data, classes_data);
-      tf.dispose(res);
-    });
-
-    requestAnimationFrame(() => detectFrame(model)); // get another frame
-    tf.engine().endScope();
-  };
+  const classThreshold = 0.25;
 
   useEffect(() => {
-    tf.loadGraphModel(`${window.location.origin}/${modelName}_web_model/model.json`, {
-      onProgress: (fractions) => {
-        setLoading({ loading: true, progress: fractions });
-      },
-    }).then(async (yolov5) => {
-      // Warmup the model before using real data.
-      const dummyInput = tf.ones(yolov5.inputs[0].shape);
-      await yolov5.executeAsync(dummyInput).then((warmupResult) => {
-        tf.dispose(warmupResult);
-        tf.dispose(dummyInput);
+    tf.ready().then(async () => {
+      const yolov5 = await tf.loadGraphModel(
+        `${window.location.origin}/${modelName}_web_model/model.json`,
+        {
+          onProgress: (fractions) => {
+            setLoading({ loading: true, progress: fractions }); // set loading fractions
+          },
+        }
+      ); // load model
 
-        setLoading({ loading: false, progress: 1 });
-        webcam.open(videoRef, () => detectFrame(yolov5));
-      });
+      // warming up model
+      const dummyInput = tf.ones(yolov5.inputs[0].shape);
+      const warmupResult = await yolov5.executeAsync(dummyInput);
+      tf.dispose(warmupResult); // cleanup memory
+      tf.dispose(dummyInput); // cleanup memory
+
+      setLoading({ loading: false, progress: 1 });
+      setModel({
+        net: yolov5,
+        inputShape: yolov5.inputs[0].shape,
+      }); // set model & input shape
     });
   }, []);
 
   return (
     <div className="App">
-      <h2>Object Detection Using YOLOv5 & Tensorflow.js</h2>
-      {loading.loading ? (
-        <Loader>Loading model... {(loading.progress * 100).toFixed(2)}%</Loader>
-      ) : (
-        <p>Currently running model : YOLOv5{modelName.slice(6)}</p>
-      )}
+      {loading.loading && <Loader>Loading model... {(loading.progress * 100).toFixed(2)}%</Loader>}
+      <div className="header">
+        <h1>📷 YOLOv5 Live Detection App</h1>
+        <p>
+          YOLOv5 live detection application on browser powered by <code>tensorflow.js</code>
+        </p>
+        <p>
+          Serving : <code className="code">{modelName}</code>
+        </p>
+      </div>
 
       <div className="content">
-        <video autoPlay playsInline muted ref={videoRef} />
-        <canvas width={640} height={640} ref={canvasRef} />
+        <video
+          autoPlay
+          muted
+          ref={cameraRef}
+          onPlay={() => detect(cameraRef.current, model, classThreshold, canvasRef.current)}
+        />
+        <video
+          autoPlay
+          muted
+          ref={videoRef}
+          onPlay={() => detect(videoRef.current, model, classThreshold, canvasRef.current)}
+        />
+        <canvas width={model.inputShape[1]} height={model.inputShape[2]} ref={canvasRef} />
       </div>
+
+      <ButtonHandler cameraRef={cameraRef} videoRef={videoRef} />
     </div>
   );
 };

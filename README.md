@@ -1,6 +1,17 @@
 # Object Detection using YOLOv5 and Tensorflow.js
 
+<p align="center">
+  <img src="./sample.png" />
+</p>
+
+![love](https://img.shields.io/badge/Made%20with-🖤-white)
+![tensorflow.js](https://img.shields.io/badge/tensorflow.js-white?logo=tensorflow)
+
+---
+
 [**More Feature Version**](https://hyuto.github.io/showcase/yolov5-tfjs)
+
+---
 
 Object Detection application right in your browser. Serving YOLOv5 in browser using tensorflow.js
 with `webgl` backend.
@@ -53,8 +64,13 @@ Use another YOLOv5 model.
 4. Update `modelName` in `App.jsx` to new model name
    ```jsx
    ...
-   // configs
+   // model configs
    const modelName = "yolov5*"; // change to new model name
+   const classThreshold = 0.25;
    ...
    ```
 5. Done! 😊
+
+## Reference
+
+https://github.com/ultralytics/yolov5

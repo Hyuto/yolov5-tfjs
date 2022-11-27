@@ -4,10 +4,9 @@
 export class Webcam {
   /**
    * Open webcam and stream it through video tag.
-   * @param {React.MutableRefObject} videoRef video tag reference
-   * @param {function} onLoaded callback function to be called when webcam is open
+   * @param {HTMLVideoElement} videoRef video tag reference
    */
-  open = (videoRef, onLoaded) => {
+  open = (videoRef) => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices
         .getUserMedia({
@@ -17,25 +16,21 @@ export class Webcam {
           },
         })
         .then((stream) => {
-          window.localStream = stream;
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            onLoaded();
-          };
+          videoRef.srcObject = stream;
         });
     } else alert("Can't open Webcam!");
   };
 
   /**
    * Close opened webcam.
-   * @param {React.MutableRefObject} videoRef video tag reference
+   * @param {HTMLVideoElement} videoRef video tag reference
    */
   close = (videoRef) => {
-    if (videoRef.current.srcObject) {
-      videoRef.current.srcObject = null;
-      window.localStream.getTracks().forEach((track) => {
+    if (videoRef.srcObject) {
+      videoRef.srcObject.getTracks().forEach((track) => {
         track.stop();
       });
+      videoRef.srcObject = null;
     } else alert("Please open Webcam first!");
   };
 }
