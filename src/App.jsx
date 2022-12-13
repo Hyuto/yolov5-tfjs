@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl"; // set backend to webgl
 import Loader from "./components/loader";
 import ButtonHandler from "./components/btn-handler";
-import { detect } from "./utils/detect";
+import { detectImage, detectVideo } from "./utils/detect";
 import "./style/App.css";
 
 const App = () => {
@@ -14,6 +14,7 @@ const App = () => {
   }); // init model & input shape
 
   // references
+  const imageRef = useRef(null);
   const cameraRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -61,22 +62,27 @@ const App = () => {
       </div>
 
       <div className="content">
+        <img
+          src="#"
+          ref={imageRef}
+          onLoad={() => detectImage(imageRef.current, model, classThreshold, canvasRef.current)}
+        />
         <video
           autoPlay
           muted
           ref={cameraRef}
-          onPlay={() => detect(cameraRef.current, model, classThreshold, canvasRef.current)}
+          onPlay={() => detectVideo(cameraRef.current, model, classThreshold, canvasRef.current)}
         />
         <video
           autoPlay
           muted
           ref={videoRef}
-          onPlay={() => detect(videoRef.current, model, classThreshold, canvasRef.current)}
+          onPlay={() => detectVideo(videoRef.current, model, classThreshold, canvasRef.current)}
         />
         <canvas width={model.inputShape[1]} height={model.inputShape[2]} ref={canvasRef} />
       </div>
 
-      <ButtonHandler cameraRef={cameraRef} videoRef={videoRef} />
+      <ButtonHandler imageRef={imageRef} cameraRef={cameraRef} videoRef={videoRef} />
     </div>
   );
 };

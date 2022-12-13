@@ -12,8 +12,13 @@ export const renderBoxes = (canvasRef, classThreshold, boxes_data, scores_data, 
   const ctx = canvasRef.getContext("2d");
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // clean canvas
 
+  const colors = new Colors();
+
   // font configs
-  const font = "20px sans-serif";
+  const font = `${Math.max(
+    Math.round(Math.max(ctx.canvas.width, ctx.canvas.height) / 40),
+    14
+  )}px Arial`;
   ctx.font = font;
   ctx.textBaseline = "top";
 
@@ -21,6 +26,7 @@ export const renderBoxes = (canvasRef, classThreshold, boxes_data, scores_data, 
     // filter based on class threshold
     if (scores_data[i] > classThreshold) {
       const klass = labels[classes_data[i]];
+      const color = colors.get(classes_data[i]);
       const score = (scores_data[i] * 100).toFixed(1);
 
       let [x1, y1, x2, y2] = boxes_data.slice(i * 4, (i + 1) * 4);
@@ -31,13 +37,16 @@ export const renderBoxes = (canvasRef, classThreshold, boxes_data, scores_data, 
       const width = x2 - x1;
       const height = y2 - y1;
 
-      // Draw the bounding box.
-      ctx.strokeStyle = "#00FF00";
-      ctx.lineWidth = 3.5;
+      // draw box.
+      ctx.fillStyle = Colors.hexToRgba(color, 0.2);
+      ctx.fillRect(x1, y1, width, height);
+      // draw border box.
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(Math.min(ctx.canvas.width, ctx.canvas.height) / 200, 2.5);
       ctx.strokeRect(x1, y1, width, height);
 
       // Draw the label background.
-      ctx.fillStyle = "#00FF00";
+      ctx.fillStyle = color;
       const textWidth = ctx.measureText(klass + " - " + score + "%").width;
       const textHeight = parseInt(font, 10); // base 10
       const yText = y1 - (textHeight + ctx.lineWidth);
@@ -54,3 +63,43 @@ export const renderBoxes = (canvasRef, classThreshold, boxes_data, scores_data, 
     }
   }
 };
+
+class Colors {
+  // ultralytics color palette https://ultralytics.com/
+  constructor() {
+    this.palette = [
+      "#FF3838",
+      "#FF9D97",
+      "#FF701F",
+      "#FFB21D",
+      "#CFD231",
+      "#48F90A",
+      "#92CC17",
+      "#3DDB86",
+      "#1A9334",
+      "#00D4BB",
+      "#2C99A8",
+      "#00C2FF",
+      "#344593",
+      "#6473FF",
+      "#0018EC",
+      "#8438FF",
+      "#520085",
+      "#CB38FF",
+      "#FF95C8",
+      "#FF37C7",
+    ];
+    this.n = this.palette.length;
+  }
+
+  get = (i) => this.palette[Math.floor(i) % this.n];
+
+  static hexToRgba = (hex, alpha) => {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? `rgba(${[parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)].join(
+          ", "
+        )}, ${alpha})`
+      : null;
+  };
+}
