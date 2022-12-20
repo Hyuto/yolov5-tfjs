@@ -21,7 +21,7 @@ const App = () => {
 
   // model configs
   const modelName = "yolov5n";
-  const classThreshold = 0.25;
+  const classThreshold = 0.2;
 
   useEffect(() => {
     tf.ready().then(async () => {
